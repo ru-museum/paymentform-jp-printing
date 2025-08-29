@@ -1,0 +1,488 @@
+\RequirePackage{ifluatex}
+\documentclass[a4paper,10pt,titlepage]{ltjsarticle}
+
+\usepackage[top=2cm,left=2cm,right=2cm,bottom=2cm]{geometry}
+
+% LINK
+\usepackage{url}
+\usepackage{hyperref}
+\hypersetup{pdfborder={0 0 0.5}}
+
+% 色の使用
+\usepackage{xcolor}
+\definecolor{mylinkcolor}{RGB}{3, 112, 145} %{65, 145, 3} % 色定義
+\definecolor{linkcol}{RGB}{2, 106, 77} %{65, 145, 3} % 色定義
+\hypersetup{
+    %% 
+    %% warning (pdf backend): ignoring duplicate destination with the name 'page.1'
+    %% 対策：pageanchor=false に設定
+    %%
+    pageanchor=false,
+    colorlinks=true,
+    citecolor=blue,
+    linkcolor=linkcol,
+    urlcolor=mylinkcolor % 定義された色
+}
+\def\colH#1{\color[HTML]{#1}}
+\definecolor{backcol03}{HTML}{f5fffa} 
+
+% 画像挿入
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{svg} 
+
+% TABLE
+\usepackage{tabularx,colortbl}
+\renewcommand{\arraystretch}{1.6} % TD PADDING
+
+% FONT
+\usepackage{fontspec}
+\usepackage[noto-jp,deluxe]{luatexja-preset}
+
+% FONT-SIZE
+\def\fs#1{\fontsize{#1}{#1}\selectfont }
+\def\bs#1{\textbackslash{#1}}
+
+\usepackage{pstricks}
+\usepackage{pst-barcode}
+\usepackage[pspdf={-dALLOWPSTRANSPARENCY -dNOSAFER}]{auto-pst-pdf-lua}
+\makeatletter
+\ifPreview
+  \let\Hy@FirstPageHook\relax
+  \let\Hy@EveryPageAnchor\relax
+\fi
+\makeatother
+
+\usepackage{tracking} % 字詰め
+\usepackage{ocr}      % OCRフォント
+\let\ttfamily\ocrfamily
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%%% 基本データ初期設定
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% 文字形式マクロ：OCRフォント指定及びサイズと字詰め整形
+\newcommand\setFormat[1]{\fs{12pt}\ocr{\track{6pt}{#1}}}
+
+% 背景画像（払込取扱票）指定
+\newcommand\BGImage{images/haraikomi02new.eps}
+\newcommand\BGImageW{images/haraikomi00W.eps} % Dummy
+
+% 
+% 拡張追加データの表示
+%    [0]：表示しない (デフォルト)
+%    [1]：料金代理収納バーコード表示　
+%    [2]：[ご依頼人欄]表示　
+\newcommand\visibleExtension{1}
+
+% 口座番号：A = B = C
+\newcommand\numKozaA{\setFormat{00123}}  % 口座番号：A
+\newcommand\numKozaB{\setFormat{4}}      % 口座番号：B
+\newcommand\numKozaC{\setFormat{567890}} % 口座番号：C
+\newcommand\numKingaku{\setFormat{5600}} % 金額（任意）：￥記号は不可
+
+% 加入者名
+\newcommand\nameKanyusha{加入(受領)者名}
+% 通信欄文字列：自由に追加配置出来ます
+\newcommand\tsusinranLineA{\large{{\bfseries 住所等非表示払込書}（振込人住所等は非表示としています）}}
+\newcommand\tsusinranLineB{\Large{□1□□□□□□□□□□□□□□□□□}}
+\newcommand\tsusinranLineC{\Large{□2□□□□□□□□□□□□□□□□□}}
+\newcommand\tsusinranLineD{\small{□3□□□□□□□□□□□□□□□□□□□□□□}}
+\newcommand\tsusinranLineE{\small{□4□□□□□□□□□□□□□□□□□□□□□□}}
+\newcommand\tsusinranLineF{\small{□5□□□□□□□□□□□□□□□□□□□□□□}}
+
+%%
+% 拡張追加データ
+%%
+% 料金代理収納バーコード：目視コード番号にはハイフンが入ります
+% \def\codeSetting#1{\small\texttt{\track{-1pt}{#1}}}
+\def\codeSetting#1{\fs{8pt}\texttt{\track{-1pt}{#1}}}
+\def\codeNumber{(91)510001123456789000000000001020010100010008}  % コード番号
+\def\visualNumA{\codeSetting{(91)510001-1234567890000000000010}} % 目視コード番号：１行目
+\def\visualNumB{\codeSetting{200101-0-001000-8}}                 % 目視コード番号：２行目
+
+%% [ご依頼人]欄データ：文字間は "\quad" "\;" 等で調整します
+\newcommand\postcodeNumber{\codeSetting{100\;\; 8792}}  % 郵便番号
+\newcommand\clientAddress{東京都千代田区大手町二丁目3番1号} % 依頼人住所
+\newcommand\clientName{\Large 郵政 花子}                 % 依頼人氏名　
+\newcommand\clientTellNumber{\codeSetting{0000\quad\; 0000\quad\; 0000}}  % 電話番号
+
+%%
+% データ表示マクロ：データは自由に追加可能です
+%%
+\newcommand\dataTEMPLATE{
+  \begin{picture}(180,114)(0,0)
+  %%% 左側欄
+    % 口座記号番号
+    \put(19.6,393){\numKozaA}
+    \put(101,393){\numKozaB}
+    \put(139,393){\numKozaC}
+    % 金額
+    \put(303,393){\numKingaku}
+    % 加入者名
+    \put(36,367){\Large\nameKanyusha}
+    % ご依頼人・通信欄
+    \put(40,324){\tsusinranLineA}
+    \put(40,305){\tsusinranLineB}
+    \put(40,290){\tsusinranLineC}
+    \put(46,274){\tsusinranLineD}
+    \put(46,264){\tsusinranLineE}
+    \put(46,254){\tsusinranLineF}
+
+  %%% 右側欄
+    % 口座記号番号
+    \put(407,393){\numKozaA}
+    \put(488.6,393){\numKozaB}
+    \put(437.6,361){\numKozaC}
+    % 金額
+    \put(466.6,300){\numKingaku}
+    % 加入者名
+    \put(406,336){\large\nameKanyusha}
+
+    % [ご依頼人欄]
+    \ifnum \visibleExtension=2%
+      \put(98.46,237.6){\postcodeNumber}
+      \put(42,226.6){\clientAddress}
+      \put(68,208){\Large\clientName}
+      \put(133.6,190){\clientTellNumber}
+    \fi
+
+  \end{picture}
+}
+
+
+% TIPS: 料金代理収納バーコード
+\newcommand\gsBarcode[3]{
+  \begin{pspicture}(0,0)(109,20)
+    \rput[bl](22,38){
+      \psbarcode{#1}{width=2.28}{gs1-128}}
+    \rput[bl](22,37.7){#2}
+    \rput[bl](22,37.4){#3}
+  \end{pspicture}
+}
+
+% 表示用: 料金代理収納バーコード
+\newcommand\dspBarcode{
+  \rput[bl](18,45.4){
+    \psbarcode{\codeNumber}{
+      guardwhitespace
+      width=2
+      height=0.4
+    }{gs1-128}
+  }
+  \rput[bl]{0}(17.96,45.1){\visualNumA}
+  \rput[bl]{0}(17.96,44.8){\visualNumB}
+}
+
+% 背景画像とデータ表示
+\def\dspImage#1{%
+
+%%% PAGE:1
+\ifnum#1=1%
+% 背景画像表示（１頁目）
+\begin{pspicture}(0,0)(190,140)
+  \rput[bl]{0}(16,42){%
+    \includegraphics[width=188truemm,height=120truemm,angle=0]{\BGImage}}
+  
+  % 料金代理収納バーコード表示（オプション）
+  \ifnum \visibleExtension=1%
+    \dspBarcode
+  \fi
+
+\end{pspicture}
+
+  % データ表示
+  \dataTEMPLATE
+\fi%\ifnum#1=1
+
+%%% PAGE:2
+\ifnum#1=2%
+% 背景画像表示（２頁目Dummy）
+\begin{pspicture}(0,0)(190,140)
+  \rput[bl]{0}(16,42){%
+    \includegraphics[width=188truemm,height=120truemm,angle=0]{\BGImageW}}
+
+  % 料金代理収納バーコード表示（オプション）
+  \ifnum \visibleExtension=1%
+    \dspBarcode
+  \fi
+\end{pspicture}
+
+  % データ表示
+  \dataTEMPLATE
+\fi%\ifnum#1=2
+
+}
+
+\title{{\Huge\track{8pt}{払込取扱票印刷}} \\ Template for LuaLa\TeX{}\\
+\vspace{2pt}[様式：\;赤 - 02\;]\vspace*{120mm}}
+\author{\href{https://github.com/ru-museum?tab=repositories}{ru\_museum}(GitHub)}
+\date{\today}
+
+\begin{document}
+%\pagestyle{empty}
+\thispagestyle{empty}
+
+\newgeometry{top=-0.56cm,left=-0.78cm}
+%%% PAGE:1
+\dspImage{\thepage}
+
+\newpage
+\thispagestyle{empty}
+
+%%% PAGE:2
+\dspImage{\thepage}
+
+\newpage
+\thispagestyle{empty}
+
+% レイアウトを元に戻す
+\newgeometry{top=2cm,left=2cm}
+
+\maketitle
+
+\clearpage
+\addtocounter{page}{+0}
+\newpage
+
+\section{概要}
+\begin{itemize}
+  \item 「払込取扱票」（日本郵政）の印刷をLuaLa\TeX{}により行います。
+  \item テンプレートデータを使用して入力値の変更を容易にしています。
+  \item 追加データの配置も制限なく自由に行えます。
+  \item コンビニ振込バーコード (料金代理収納バーコード)の挿入\footnote{初期状態では表示されていません。表示するには「{\bfseries 4 TIPS 4.1 コンビニ振込バーコードの追加}」を参照して下さい。}が可能です(オプション)。
+\end{itemize}
+ 
+\section{作業環境}
+\begin{itemize}
+  \item GNU/Linux Debian:sid 6.12.38(2025-07-16)
+  \item TeX Live 2025/Debian 
+  \item LuaTeX, Version 1.22.0
+  \item pst-barcode(PSTricks)  
+  
+\end{itemize}
+
+\section{印刷手順}
+\begin{itemize}
+  \item[※] PDF及び各種プリンタの状況・環境に依り「背景を印刷しない」機能の可不可があり、基本的に\\  
+  「{\bfseries\colH{800000} ２ページ目}」を印刷に用います。
+\end{itemize}
+
+\subsection{プリンタの設定と印刷}
+\begin{enumerate}
+  \item 「ページの設定」で「普通紙-標準」「A4」「縦方向」を確認します\footnote{機能があれば、余白マージンTOP及びLEFTの値を「０」として置いて下さい。}。
+  \item 印刷は２ページ目（背景画像のないページ）を選択し、印刷範囲を「{\bfseries\colH{800000} 現在のページだけ}」に設定します。
+  \item 本印刷の前にA4用紙にテスト印刷し、各データの印刷位置が正確かを確認して下さい。
+  \item プリンタトレイに「払込取扱票」を印刷方向に向け「用紙ガイド」を用紙の端に合わせ印刷します\footnote{通常プリンタに向かいトレイ「{\bfseries 右側}」にセットされることを想定しています。}。
+  \item プリンタ環境に依り印刷位置にずれが生じる場合は、「{\bfseries 3.0.2 データの修正}」に従って下さい。
+
+\end{enumerate}
+
+\subsection{データの修正}
+ \begin{enumerate}
+   \item サンプルとして表示されてる各種データーの変更をします。\\
+   ソースファイル(.tex)の該当箇所 \{\; *** \;\} を編集します。
+
+   \item 表示位置の修正は、各々の数値（\;X, Y\;）を変更し左右上下に移動させます。
+
+   \item 幾度か修正とコンパイルを繰り返し正確な位置決めを行います。\\
+   \verb|$ lualatex --shell-escape paymentform02new-printing.tex|           
+  \item[※] 使用のプリンタ環境に依り印刷結果にずれが生ずる場合もありますので修正を重ねて下さい。
+ \end{enumerate}
+
+\subsection{データの追加}
+ \begin{enumerate}
+   \item 新規データーは自由に追加可能です。
+   \item コマンド {\colH{800000} \bs rput}(pspicture環境) 或いは {\colH{800000} \bs put}(picture環境)を追加し（\;X, Y\;）で位置を指定し、\\
+   \{\quad \}の中に文字列を挿入します。但し、 {\colH{800000} \bs rput では日本語文字は使用出来ません}。
+   \item フォントサイズ及び字体は環境の範囲内で自由に指定出来ます。
+   　
+ \end{enumerate}
+
+\subsection{背景画像の調整}
+\begin{itemize}
+  \item プリンタ環境に依り全体の印刷位置をずらしたい場合は、背景画像「払込取扱票」自体を上下左右に移動することが出来ます。\\
+以下の {\colH{800000} top} と {\colH{800000} left} の値で調整します：
+\begin{verbatim}
+\begin{document}
+\newgeometry{top=-0.56cm,left=-0.78cm}
+\end{verbatim}
+  
+\end{itemize}
+
+\subsection{拡張追加データの表示}
+
+\begin{itemize}
+   \item 「ご依頼人」欄への「拡張追加データ」（「料金代理収納バーコード」及び「依頼人データ」）を表示することが出来ます。   
+   \item 振込人用途（加入者側項目が印刷済）に「ご依頼人」欄のみの印刷をしたい場合は、数値その他の初期値部分を消去しテンプレート文字列の修正・追加を行って下さい。
+   \item 「ご依頼人」欄データの表示：
+   \item[] 
+\vspace{2mm}
+\begin{tabular}{|c|l|}
+\hline
+\bfseries{設定値} & \hspace{40pt}\bfseries{表示}\\
+\hline
+\{ 0 \} & 表示しない (デフォルト)\\
+\hline
+\{ 1 \} & 料金代理収納バーコード\\
+\hline
+\{ 2 \} & [ご依頼人欄]データ\\
+\hline
+\end{tabular}
+\vspace{2mm}
+              
+\begin{verbatim}
+% 拡張追加データの表示
+\newcommand\visibleExtension{1}
+\end{verbatim}
+
+   \item[※] 現在、情報セキュリティ上「依頼人データ」を{\colH{800000}非表示}とする傾向があります。   
+
+\end{itemize}
+
+\newpage
+
+\section{TIPS}
+
+\subsection{コンビニ振込バーコードの追加}
+
+\begin{itemize}
+  \item {\colH{800000} コンビニ振込バーコード}(料金代理収納バーコード)\footnote{コード体系はGS1-128の1段表示。アプリケーション識別子は自由使用の“91”を使用。44桁の固定長としバーコード表示全体の幅は60mm以内で表示する。バーコードの内容を確認するための「目視文字」をバーコード表示の下に2段で表示する。}を追加することが出来ます。\\
+以下の様に修正します：（参照「{\bfseries 3.5 拡張追加データの表示}」）
+\begin{verbatim}
+% 料金代理収納バーコード表示：表示する[1]　表示しない[0]
+\newcommand\visibleExtension{1}
+\end{verbatim}
+  \item[\hspace{30pt}※] 位置・大きさはカスタマイズ可能です。 
+  \item コンビニ料金代理収納に利用されるエンコードは{\colH{800000} GS1-128}(UCC/EAN-128)です。
+\end{itemize}
+
+\subsubsection{コンビニ振込バーコードの作成}
+
+\begin{enumerate}
+  \item {\bfseries 基本バーコードシンボル}\\
+ENCODE: gs1-128\\
+%  コード番号：
+\begin{pspicture}(2.5,1in)
+\psbarcode{(91)510001123456789000000000001020010100010008}{
+  includetext 
+  guardwhitespace
+  width=3.58}{gs1-128}
+\end{pspicture}
+
+  \item {\bfseries コード番号の目視化}
+\vspace{2mm}
+
+\begin{itemize}
+  \item コード番号はハイフン " - " 無しで入力します。
+  \item オプション{\colH{800000} includetext}を外し文字列を追加します。
+  \item 追加文字列は２行に分割し、ハイフンを適宜挿入します([\;\;]内は桁数)。\\
+  \ocr{(91)510001-1234567890000000000010}\\
+\hspace{12pt}（アプリケーション識別子）[ 2 ] + 発行企業コード（国コード下１桁 + メーカコード5桁）[ 6 ]\\
+\hspace{12pt}+ 自由使用欄[ 21 ] + 再発行区分（再発行回数）[ 1 ]\\
+\ocr{200101-0-001000-8}\\
+\hspace{12pt}支払期限（西暦下2桁＋月2桁＋日2桁）[ 6 ] + 印紙フラッグ（0：貼らない、1：貼る）[ 1 ]\\
+\hspace{12pt}+ 支払金額（円）[ 6 ] + 全体チェックデジット（モジュラス10）[ 1 ]
+
+  \item[] {\bfseries 表示例：}\vspace{2mm}\\
+%\gsBarcode %% BARCODE 表示
+\gsBarcode{\codeNumber}{\visualNumA}{\visualNumB} %% BARCODE 表示
+
+\vspace{4mm}
+
+SOURCE:
+{\fs{6pt}
+\begin{verbatim}
+\begin{pspicture}(0,0)(9,2)
+ \psbarcode{(91)510001123456789000000000001020010100010008}{width=3.58}{gs1-128}
+ \rput[c]{0}(4.4,-0.2){\large\texttt{\track{-1pt}{(91)510001-1234567890000000000010}}}
+ \rput[c]{0}(2.3,-0.66){\large\texttt{\track{-1pt}{200101-0-001000-8}}}
+\end{pspicture}
+\end{verbatim}
+}
+\end{itemize}
+
+\end{enumerate}
+
+
+\subsection{印字規則}
+
+\begin{itemize}
+  \item 以下の基準は、ゆうちょ銀行の「振替払込書作成基準」\footnote{\href{https://www.toshin-print.co.jp/haraikomi/img/sakuseikijyun_202006.pdf}{振替払込書作成基準}［2020年2月］\\https://www.toshin-print.co.jp/haraikomi/img/sakuseikijyun\_202006.pdf}に従っています。
+  \item 基準での文字指定は、JIS X9001のサイズI（文字ピッチ: 1インチ(25.4mm)あたり10文字）と定められていますが、latex上では概ね{\colH{800000}12pt}指定が妥当と思われます。ここでは印刷の都合上、文字サイズを{\colH{800000}12pt}、文字間隔を{\colH{800000}6pt}と設定しています。
+  \item 文字サイズに関しては、プリンタを含め使用環境に左右されますので適宜調整を行って下さい。
+  \item 数値以外の印字部分には、文字種などの規定はありません。\\
+  \item[] \hspace{-12pt}{\bfseries その他の注意事項}： 
+  \item 金額の首部には何も印字しない（「¥」「金」等）。
+  \item 払込請求書兼受領証（右側欄）に依頼人氏名を印字する場合は、8ポイント以上の大きさが必要。
+  \item 払込取扱票の太枠罫線内に印刷する文字は、各罫線から 0.5mm 以上の間隔を設ける。
+  \item コンビニ用のバーコードは、「ご依頼人・通信欄」に印字する。
+
+  \item[] 
+\begin{center}
+  \begin{tabular}{|l|l|l|}
+\hline
+{\bfseries 文字サイズ} & {\bfseries 表記} & {\bfseries 備考}\\
+\hline
+\bs ocr\{\quad\} & {\ocr{0123456789}} & 指定なし（defaul: 10pt）\\
+\hline
+large & {\large\ocr{0123456789}} & 10pt指定時12pt表示となります\\
+\hline
+12pt & {\fs{12pt}\ocr{0123456789}} & 直接指定\\
+\hline
+12pt & {\fs{12pt}\ocr{\track{5pt}{0123456789}}} & 文字間隔(5pt)：10文字／25.4mm(1インチ)\\
+\hline
+12pt & {\fs{12pt}\ocr{\track{0.1in}{0123456789}}} & 文字間隔(0.1in)：10文字／25.4mm(1インチ)\\
+\hline
+  \end{tabular}
+  \label{tab:}
+\end{center}
+
+※ 10CPI(Characters Per Inch):1インチ（約25.4mm）あたり10文字\\
+
+  \item[] 
+\begin{tabular}{|l|l|l|l|}
+\hline
+{\bfseries 文字サイズ} & {\bfseries 文字間隔} & {\bfseries 表記} & {\bfseries 備考(文字間隔：5pt)}\\
+\hline
+9pt & 5pt & {\fs{9pt}\ocr{\track{5pt}{0123456789}}} & 10CPI\\
+\hline
+10pt & 5pt & {\fs{10pt}\ocr{\track{5pt}{0123456789}}} &  \\
+\hline
+11pt & 5pt & {\fs{11pt}\ocr{\track{5pt}{0123456789}}} &  \\
+\hline
+{\colH{800000} 12pt} & {\colH{800000}6pt} & {\colH{800000}\fs{12pt}\ocr{\track{6pt}{0123456789}}} & {\colH{800000} defaul設定} \\
+\hline
+12pt & 0.1in & {\fs{12pt}\ocr{\track{0.1in}{0123456789}}} & OCR-B サイズI \\
+\hline
+  \end{tabular}
+
+\end{itemize}
+
+\newpage
+
+\subsection{字詰め用パッケージ}
+
+\begin{itemize}
+  \item このテンプレートを使用するには、字詰め用パッケージ（tracking）が必要です。　 
+  \item 以下をダウンロードしてプロジェクトフォルダ内に置いて下さい。\\
+\href{https://www.ctan.org/tex-archive/macros/latex/contrib/tracking/tracking.sty}{tracking.sty} (https://www.ctan.org/tex-archive/macros/latex/contrib/tracking/tracking.sty)\\
+\href{http://www.ctan.org/pkg/tracking}{CTAN: tracking – Adjust tracking of strings} (http://www.ctan.org/pkg/tracking)
+\end{itemize}
+
+\subsection{ファイルのBUILD}
+
+\begin{itemize}
+  \item .texファイルをコンパイルし易い様にSHELLスクリプト（lualatex-build）を用意しました。　 
+
+\end{itemize}
+
+\begin{enumerate}
+  \item 作業フォルダに添付のlualatex-buildを貼り付けます。
+  \item \verb|$ ./lualatex-build paymentform02new-printing.tex|
+\end{enumerate}
+
+\end{document}
+
+
+
+
