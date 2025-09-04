@@ -397,6 +397,30 @@ large & {\large\ocr{0123456789}} & 10pt指定時12pt表示となります\\
 
 \end{itemize}
 
+\newpage
+
+\subsection{字詰め用パッケージ}
+
+\begin{itemize}
+  \item このテンプレートを使用するには、字詰め用パッケージ（tracking）が必要です。　 
+  \item 以下をダウンロードしてプロジェクトフォルダ内に置いて下さい。\\
+\href{https://www.ctan.org/tex-archive/macros/latex/contrib/tracking/tracking.sty}{tracking.sty} (https://www.ctan.org/tex-archive/macros/latex/contrib/tracking/tracking.sty)\\
+\href{http://www.ctan.org/pkg/tracking}{CTAN: tracking – Adjust tracking of strings} (http://www.ctan.org/pkg/tracking)
+\end{itemize}
+
+\subsection{ファイルのBUILD}
+
+\begin{itemize}
+  \item .texファイルをコンパイルし易い様にSHELLスクリプト（lualatex-build）を用意しました。　 
+
+\end{itemize}
+
+\begin{enumerate}
+  \item 作業フォルダに添付のlualatex-buildを貼り付けます。
+  \item \verb|$ ./lualatex-build paymentform02new-printing.tex|
+\end{enumerate}
+
+
 \end{document}
 
 
